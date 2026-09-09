@@ -11,16 +11,19 @@ export function Skeleton({ className }: { className?: string }) {
 /** Pre-composed skeletons for the most common screens (fast perceived perf). */
 export function HomeSkeleton() {
   return (
-    <div className="space-y-s4">
-      <Skeleton className="h-8 w-2/3" />
-      <Skeleton className="h-28 w-full" />
-      <div className="grid grid-cols-2 gap-s3">
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
+    <div>
+      <Skeleton className="h-4 w-40" />
+      <Skeleton className="mt-4 h-12 w-2/3 rounded-lg" />
+      <Skeleton className="mt-2 h-4 w-1/2" />
+      <div className="mt-8 grid gap-s3h sm:grid-cols-2 xl:grid-cols-3">
+        <Skeleton className="h-44 rounded" />
+        <Skeleton className="h-44 rounded" />
+        <Skeleton className="h-44 rounded" />
       </div>
-      <Skeleton className="h-40 w-full" />
+      <div className="mt-s3h grid gap-s3h lg:grid-cols-3">
+        <Skeleton className="h-56 rounded lg:col-span-2" />
+        <Skeleton className="h-56 rounded" />
+      </div>
     </div>
   );
 }

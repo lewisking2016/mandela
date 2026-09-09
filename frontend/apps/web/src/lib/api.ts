@@ -177,6 +177,32 @@ export async function createAnnouncementAction(input: { title: string; body: str
   return mutate("/web/announcements", { ...input, audience: { all: true } });
 }
 
+export async function confirmPaymentAction(input: { receiptNo: string }) {
+  return mutate("/web/money/payments/confirm", input);
+}
+
+export async function updateSettingsAction(input: Record<string, unknown>) {
+  return mutate("/web/settings", input);
+}
+
+// ---------------------------------------------------------------------------
+// Live watchers — cheap hashes polled by <LiveRefresh>
+// ---------------------------------------------------------------------------
+
+export async function watchStaff(): Promise<string> {
+  const r = await apiFetch("/web/watch/staff");
+  if (!r.ok) throw new Error("watch failed");
+  const body = (await r.json()) as { hash?: string };
+  return body.hash ?? "0";
+}
+
+export async function watchGuardian(): Promise<string> {
+  const r = await apiFetch("/web/watch/guardian");
+  if (!r.ok) throw new Error("watch failed");
+  const body = (await r.json()) as { hash?: string };
+  return body.hash ?? "0";
+}
+
 // ---------------------------------------------------------------------------
 // Reads used by the role screens
 // ---------------------------------------------------------------------------
@@ -261,4 +287,64 @@ export interface InsightsData {
 }
 export async function getInsights() {
   return read<InsightsData | { error: string }>("/web/insights", { error: "unavailable" });
+}
+
+// ---------------------------------------------------------------------------
+// Messages / staff directory / levies / pending / settings / guardian profile
+// ---------------------------------------------------------------------------
+
+export interface MessageRow {
+  id: string; title: string | null; guardian: string; learner: string | null;
+  channel: string; state: string; created_at: string;
+}
+export async function getMessages() {
+  return read<{ messages: MessageRow[] }>("/web/messages", { messages: [] });
+}
+
+export interface StaffRow {
+  id: string; full_name: string; role: string; email: string | null; phone: string | null; active: boolean; classes: string | null;
+}
+export async function getStaffDirectory() {
+  return read<{ staff: StaffRow[] }>("/web/staff", { staff: [] });
+}
+
+export interface LevyRow { id: string; name: string; class: string | null; amount_cents: string; is_optional: boolean }
+export async function getLevies() {
+  return read<{ levies: LevyRow[] }>("/web/money/levies", { levies: [] });
+}
+
+export interface PendingPaymentRow {
+  receipt_no: string; learner: string; amount_cents: string; method: string; reference: string | null; paid_at: string;
+}
+export async function getPendingPayments() {
+  return read<{ pending: PendingPaymentRow[] }>("/web/money/pending", { pending: [] });
+}
+
+export interface SettingsData {
+  name: string; tagline: string | null; motto: string | null;
+  contact_phone: string | null; contact_email: string | null; contact_address: string | null;
+  quote_text: string | null; quote_author: string | null;
+  modules: { title: string; body: string }[];
+  nav: Record<string, string[]>;
+  prime_questions: Record<string, string>;
+}
+export async function getSettings() {
+  return read<SettingsData | { error: string }>("/web/settings", { error: "unavailable" });
+}
+
+export interface GuardianProfileData {
+  full_name: string; phone: string; email: string | null; relationship: string;
+  wa_opt_in: boolean; sms_fallback: boolean;
+  learners: { id: string; name: string; class: string | null }[];
+}
+export async function getGuardianProfile() {
+  return read<GuardianProfileData | { error: string }>("/web/guardian/profile", { error: "unavailable" });
+}
+
+export interface GuardianMessageRow {
+  id: string; title: string | null; body: string | null; urgency: string | null;
+  channel: string; state: string; created_at: string;
+}
+export async function getGuardianMessages() {
+  return read<{ messages: GuardianMessageRow[] }>("/web/guardian/messages", { messages: [] });
 }

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MandelaMark } from "@mandela/ui";
+import { NavPill } from "@/components/NavPill";
+import { AppLiveBar } from "./LiveBar";
 
 /**
  * AppShell — comp 02's frame: 248px ink sidebar on desktop (brand, mono
@@ -116,36 +118,27 @@ export function AppShell({
         </div>
 
         <p className="px-3 pb-1.5 pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-600">Work</p>
-        <nav aria-label="Primary" className="flex flex-col gap-0.5">
-          {shown.map((tab) => {
-            const href = tabToHref(tab, first);
-            const active = pathname === href;
-            return (
-              <Link
-                key={tab}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium ${
-                  active ? "bg-white font-semibold text-ink-950" : "text-ink-300 hover:bg-ink-900 hover:text-white"
-                }`}
+        <NavPill
+          className="flex flex-col gap-0.5"
+          items={shown.map((tab) => ({
+            href: tabToHref(tab, first),
+            label: tab,
+            icon: (
+              <svg
+                viewBox="0 0 24 24"
+                className="h-[17px] w-[17px]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-[17px] w-[17px]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  {ICONS[tab] ?? FALLBACK_ICON}
-                </svg>
-                {tab}
-              </Link>
-            );
-          })}
-        </nav>
+                {ICONS[tab] ?? FALLBACK_ICON}
+              </svg>
+            ),
+          }))}
+        />
 
         <div className="mt-auto flex items-center gap-3 border-t border-deep-line px-2 pt-4">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-deep-line text-xs font-semibold text-white">
@@ -184,12 +177,15 @@ export function AppShell({
                 <span className="block truncate text-[11px] text-muted">{userName} · {userMeta}</span>
               </span>
             </div>
-            <button
-              onClick={signOut}
-              className="rounded-pill px-3 py-2.5 text-xs font-semibold text-muted hover:bg-paper-100 hover:text-text"
-            >
-              Sign out
-            </button>
+            <div className="flex items-center gap-2">
+              <AppLiveBar />
+              <button
+                onClick={signOut}
+                className="rounded-pill px-3 py-2.5 text-xs font-semibold text-muted hover:bg-paper-100 hover:text-text"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </header>
 

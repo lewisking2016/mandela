@@ -140,3 +140,15 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; }
 }
+
+/* Route transitions — cinematic fade-through, once per navigation */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-fade-up {
+  animation: fade-up .35s var(--ease-mandela) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation: none; }
+}

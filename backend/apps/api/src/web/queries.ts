@@ -560,6 +560,298 @@ export async function createAnnouncement(
 }
 
 // ---------------------------------------------------------------------------
+// Live watchers — tiny payloads polled by LiveRefresh; the hash drives
+// router.refresh() so RSC pages update without heavy client state.
+// ---------------------------------------------------------------------------
+
+export async function pulseHash(dbName: string): Promise<string> {
+  const db = getSchoolPool(dbName);
+  const r = await db.query<{
+    present: string; expected: string; paid_today: string; paid_count: string; ann: string;
+  }>(
+    `SELECT
+       (SELECT COUNT(*) FROM attendance WHERE day = CURRENT_DATE AND mark = 'present')::text AS present,
+       (SELECT COUNT(*) FROM learner WHERE status = 'active')::text AS expected,
+       (SELECT COALESCE(SUM(amount),0) FROM payments WHERE state='confirmed' AND paid_at::date = CURRENT_DATE)::text AS paid_today,
+       (SELECT COUNT(*) FROM payments WHERE state='confirmed' AND paid_at::date = CURRENT_DATE)::text AS paid_count,
+       (SELECT COALESCE(MAX(extract(epoch FROM created_at)),0) FROM announcement)::text AS ann`,
+  );
+  const row = r.rows[0]!;
+  return `${row.present}/${row.expected}/${row.paid_today}/${row.paid_count}/${row.ann}`;
+}
+
+export async function guardianHash(dbName: string, guardianId: string): Promise<string> {
+  return withSession(dbName, { userId: guardianId, role: "guardian", guardianId }, async (c) => {
+    const r = await c.query<{ h: string | null }>(
+      `SELECT
+         (SELECT COALESCE(SUM(extract(epoch FROM paid_at))::text || ':' || COUNT(*), '0')
+            FROM payments WHERE state='confirmed' AND learner_id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = $1))
+         || '/' ||
+         (SELECT COALESCE(MAX(extract(epoch FROM created_at))::text, '0') FROM announcement)
+         || '/' ||
+         (SELECT COALESCE(MAX(extract(epoch FROM due_on))::text || ':' || COUNT(*), '0') FROM homework
+            WHERE due_on >= CURRENT_DATE AND class_id IN (SELECT class_id FROM learner WHERE id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = $1)))
+         AS h`,
+      [guardianId],
+    );
+    return r.rows[0]!.h ?? "0";
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Messages: the delivery ledger (announcement -> guardian messages)
+// ---------------------------------------------------------------------------
+
+export interface MessageRow {
+  id: string;
+  title: string | null;
+  guardian: string;
+  learner: string | null;
+  channel: string;
+  state: string;
+  created_at: string;
+}
+
+export async function listMessages(dbName: string, principal: Extract<Principal, { kind: "staff" }>, limit = 40): Promise<MessageRow[]> {
+  return withSession(dbName, { userId: principal.userId, role: principal.role }, async (c) => {
+    const r = await c.query<MessageRow>(
+      `SELECT m.id::text, a.title, g.full_name AS guardian, l.first_name || ' ' || l.last_name AS learner,
+              m.channel::text, m.state::text, m.created_at::text
+       FROM message m
+       JOIN guardian g ON g.id = m.guardian_id
+       LEFT JOIN learner l ON l.id = m.learner_id
+       LEFT JOIN announcement a ON a.id = m.announcement_id
+       ORDER BY m.created_at DESC LIMIT $1`,
+      [limit],
+    );
+    return r.rows;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// People: staff directory (RLS: everyone sees staff rows per policy)
+// ---------------------------------------------------------------------------
+
+export interface StaffRow {
+  id: string; full_name: string; role: string; email: string | null; phone: string | null; active: boolean; classes: string | null;
+}
+
+export async function listStaff(dbName: string, principal: Extract<Principal, { kind: "staff" }>): Promise<StaffRow[]> {
+  return withSession(dbName, { userId: principal.userId, role: principal.role }, async (c) => {
+    const r = await c.query<StaffRow>(
+      `SELECT id::text, full_name, role::text, email::text, phone, active,
+              CASE WHEN classes IS NULL THEN NULL ELSE array_to_string(classes, ', ') END AS classes
+       FROM staff ORDER BY active DESC, role, full_name`,
+    );
+    return r.rows;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Money: levies (fee structures) + pending payments + confirm
+// ---------------------------------------------------------------------------
+
+export interface LevyRow { id: string; name: string; class: string | null; amount_cents: string; is_optional: boolean }
+
+export async function listLevies(dbName: string, principal: Extract<Principal, { kind: "staff" }>): Promise<LevyRow[]> {
+  return withSession(dbName, { userId: principal.userId, role: principal.role }, async (c) => {
+    const r = await c.query<LevyRow>(
+      `SELECT fs.id::text, fs.name, cl.name AS class, fs.amount::text AS amount_cents, fs.is_optional
+       FROM fee_structure fs
+       LEFT JOIN class cl ON cl.id = fs.class_id
+       WHERE fs.term_id = (SELECT id FROM term ORDER BY starts_on DESC LIMIT 1)
+       ORDER BY fs.is_optional, fs.name`,
+    );
+    return r.rows;
+  });
+}
+
+export interface PendingPaymentRow {
+  receipt_no: string; learner: string; amount_cents: string; method: string; reference: string | null; paid_at: string;
+}
+
+export async function listPendingPayments(
+  dbName: string,
+  principal: Extract<Principal, { kind: "staff" }>,
+): Promise<PendingPaymentRow[]> {
+  return withSession(dbName, { userId: principal.userId, role: principal.role }, async (c) => {
+    const r = await c.query<PendingPaymentRow>(
+      `SELECT p.receipt_no, l.first_name || ' ' || l.last_name AS learner,
+              p.amount::text AS amount_cents, p.method::text, p.reference, p.paid_at::text
+       FROM payments p JOIN learner l ON l.id = p.learner_id
+       WHERE p.state = 'pending'
+       ORDER BY p.paid_at ASC LIMIT 50`,
+    );
+    return r.rows;
+  });
+}
+
+export async function confirmPayment(
+  dbName: string,
+  principal: Extract<Principal, { kind: "staff" }>,
+  receiptNo: string,
+): Promise<{ receipt_no: string }> {
+  return withSession(dbName, { userId: principal.userId, role: principal.role }, async (c) => {
+    const r = await c.query<{ receipt_no: string }>(
+      `UPDATE payments SET state = 'confirmed' WHERE receipt_no = $1 AND state = 'pending' RETURNING receipt_no`,
+      [receiptNo],
+    );
+    if (!r.rowCount) throw new Error("payment not found or not pending");
+    await c.query(
+      `INSERT INTO audit_log (actor_id, actor_kind, action, entity, entity_id, after)
+       VALUES ($1, 'staff', 'payment.confirm', 'payments', $2, $3)`,
+      [principal.userId, receiptNo, JSON.stringify({ receiptNo })],
+    );
+    return r.rows[0]!;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Settings: the school edits its own identity (everything-is-data, kept true)
+// ---------------------------------------------------------------------------
+
+export interface SettingsUpdate {
+  name?: string;
+  tagline?: string;
+  motto?: string;
+  contact_phone?: string | null;
+  contact_email?: string | null;
+  contact_address?: string | null;
+  quote_text?: string | null;
+  quote_author?: string | null;
+  modules?: { title: string; body: string }[];
+  nav?: Record<string, string[]>;
+  prime_questions?: Record<string, string>;
+}
+
+export async function getSettings(dbName: string) {
+  const db = getSchoolPool(dbName);
+  const r = await db.query<{
+    name: string; tagline: string | null; motto: string | null;
+    contact_phone: string | null; contact_email: string | null; contact_address: string | null;
+    quote_text: string | null; quote_author: string | null;
+    modules_json: unknown; nav_json: unknown;
+  }>(
+    `SELECT name, tagline, motto, contact_phone, contact_email, contact_address,
+            quote_text, quote_author, modules_json, nav_json
+     FROM school_settings WHERE id = 'default'`,
+  );
+  if (!r.rowCount) throw new Error("school_settings missing");
+  const row = r.rows[0]!;
+  return {
+    name: row.name,
+    tagline: row.tagline,
+    motto: row.motto,
+    contact_phone: row.contact_phone,
+    contact_email: row.contact_email,
+    contact_address: row.contact_address,
+    quote_text: row.quote_text,
+    quote_author: row.quote_author,
+    modules: (row.modules_json as { title: string; body: string }[] | null) ?? [],
+    nav: (row.nav_json as Record<string, string[]> | null) ?? {},
+    prime_questions: DEFAULT_PRIME,
+  };
+}
+
+export async function updateSettings(
+  dbName: string,
+  principal: Extract<Principal, { kind: "staff" }>,
+  input: SettingsUpdate,
+): Promise<void> {
+  if (principal.role !== "admin" && principal.role !== "principal") {
+    throw new Error("only the principal or admin can change school settings");
+  }
+  const db = getSchoolPool(dbName);
+  await db.query(
+    `UPDATE school_settings SET
+       name = COALESCE($1, name),
+       tagline = COALESCE($2, tagline),
+       motto = COALESCE($3, motto),
+       contact_phone = COALESCE($4, contact_phone),
+       contact_email = COALESCE($5, contact_email),
+       contact_address = COALESCE($6, contact_address),
+       quote_text = COALESCE($7, quote_text),
+       quote_author = COALESCE($8, quote_author),
+       modules_json = COALESCE($9::jsonb, modules_json),
+       nav_json = COALESCE($10::jsonb, nav_json),
+       updated_at = now()
+     WHERE id = 'default'`,
+    [
+      input.name ?? null,
+      input.tagline ?? null,
+      input.motto ?? null,
+      input.contact_phone ?? null,
+      input.contact_email ?? null,
+      input.contact_address ?? null,
+      input.quote_text ?? null,
+      input.quote_author ?? null,
+      input.modules ? JSON.stringify(input.modules) : null,
+      input.nav ? JSON.stringify(input.nav) : null,
+    ],
+  );
+  await db.query(
+    `INSERT INTO audit_log (actor_id, actor_kind, action, entity, entity_id, after)
+     VALUES ($1, 'staff', 'settings.update', 'school_settings', 'default', $2)`,
+    [principal.userId, JSON.stringify({ keys: Object.keys(input) })],
+  ).catch(() => undefined); // audit RLS: only admin/principal read, but insert via app role is allowed
+}
+
+// ---------------------------------------------------------------------------
+// Guardian profile + message history (Profile / Messages screens)
+// ---------------------------------------------------------------------------
+
+export interface GuardianProfile {
+  full_name: string;
+  phone: string;
+  email: string | null;
+  relationship: string;
+  wa_opt_in: boolean;
+  sms_fallback: boolean;
+  learners: { id: string; name: string; class: string | null }[];
+}
+
+export async function guardianProfile(dbName: string, guardianId: string): Promise<GuardianProfile> {
+  return withSession(dbName, { userId: guardianId, role: "guardian", guardianId }, async (c) => {
+    const g = await c.query<{
+      full_name: string; phone: string; email: string | null; relationship: string;
+      wa_opt_in: boolean; sms_fallback: boolean;
+    }>(
+      `SELECT full_name, phone, email::text, relationship, wa_opt_in, sms_fallback
+       FROM guardian WHERE id = $1`,
+      [guardianId],
+    );
+    if (!g.rowCount) throw new Error("guardian not found");
+    const kids = await c.query<{ id: string; name: string; class: string | null }>(
+      `SELECT l.id::text, l.first_name || ' ' || l.last_name AS name, cl.name AS class
+       FROM learner_guardian lg JOIN learner l ON l.id = lg.learner_id
+       LEFT JOIN class cl ON cl.id = l.class_id
+       WHERE lg.guardian_id = $1 ORDER BY l.first_name`,
+      [guardianId],
+    );
+    return { ...g.rows[0]!, learners: kids.rows };
+  });
+}
+
+export interface GuardianMessageRow {
+  id: string; title: string | null; body: string | null; urgency: string | null;
+  channel: string; state: string; created_at: string;
+}
+
+export async function guardianMessages(dbName: string, guardianId: string, limit = 50): Promise<GuardianMessageRow[]> {
+  return withSession(dbName, { userId: guardianId, role: "guardian", guardianId }, async (c) => {
+    const r = await c.query<GuardianMessageRow>(
+      `SELECT m.id::text, a.title, a.body, a.urgency::text, m.channel::text, m.state::text, m.created_at::text
+       FROM message m
+       LEFT JOIN announcement a ON a.id = m.announcement_id
+       WHERE m.guardian_id = $1
+       ORDER BY m.created_at DESC LIMIT $2`,
+      [guardianId, limit],
+    );
+    return r.rows;
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Insights (principal): one query per number, straight from the DB
 // ---------------------------------------------------------------------------
 

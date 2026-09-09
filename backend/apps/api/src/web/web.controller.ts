@@ -128,6 +128,23 @@ export class WebController {
     return web.publicPulse(tenant.dbName);
   }
 
+  /** Cheap change-detection payloads for LiveRefresh polling. */
+  @Get("watch/staff")
+  async watchStaff(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    return { hash: await web.pulseHash(tenant.dbName) };
+  }
+
+  @Get("watch/guardian")
+  async watchGuardian(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "guardian") return { error: "guardian session required" };
+    return { hash: await web.guardianHash(tenant.dbName, principal.guardianId) };
+  }
+
   // -- role homes -------------------------------------------------------------
 
   @Get("home/guardian")
@@ -254,6 +271,14 @@ export class WebController {
 
   // -- talk ------------------------------------------------------------------------
 
+  @Get("messages")
+  async messages(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    return { messages: await web.listMessages(tenant.dbName, principal) };
+  }
+
   @Get("announcements")
   async announcements(@Req() req: Request) {
     const tenant = await tenantFromReq(req);
@@ -288,5 +313,101 @@ export class WebController {
     const principal = principalFromReq(req);
     if (!principal || principal.kind !== "staff") return { error: "staff session required" };
     return web.insights(tenant.dbName, principal);
+  }
+
+  // -- people: staff directory ----------------------------------------------------
+
+  @Get("staff")
+  async staff(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    return { staff: await web.listStaff(tenant.dbName, principal) };
+  }
+
+  // -- money: levies + pending payments --------------------------------------------
+
+  @Get("money/levies")
+  async levies(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    return { levies: await web.listLevies(tenant.dbName, principal) };
+  }
+
+  @Get("money/pending")
+  async pending(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    return { pending: await web.listPendingPayments(tenant.dbName, principal) };
+  }
+
+  @Post("money/payments/confirm")
+  @HttpCode(200)
+  async confirmPayment(@Req() req: Request, @Body() body: unknown) {
+    const input = z.object({ receiptNo: z.string().min(3).max(40) }).parse(body);
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    const result = await web.confirmPayment(tenant.dbName, principal, input.receiptNo);
+    return { ok: true, ...result };
+  }
+
+  // -- settings: the school edits its own identity ----------------------------------
+
+  @Get("settings")
+  async settings(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    return web.getSettings(tenant.dbName);
+  }
+
+  @Post("settings")
+  @HttpCode(200)
+  async updateSettings(@Req() req: Request, @Body() body: unknown) {
+    const input = z
+      .object({
+        name: z.string().min(1).max(120).optional(),
+        tagline: z.string().max(200).optional(),
+        motto: z.string().max(160).optional(),
+        contact_phone: z.string().max(30).nullable().optional(),
+        contact_email: z.string().max(120).nullable().optional(),
+        contact_address: z.string().max(160).nullable().optional(),
+        quote_text: z.string().max(400).nullable().optional(),
+        quote_author: z.string().max(120).nullable().optional(),
+        modules: z.array(z.object({ title: z.string().min(1).max(60), body: z.string().min(1).max(300) })).max(8).optional(),
+        nav: z.record(z.array(z.string().max(24)).max(6)).optional(),
+        prime_questions: z.record(z.string().max(160)).optional(),
+      })
+      .parse(body);
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "staff") return { error: "staff session required" };
+    try {
+      await web.updateSettings(tenant.dbName, principal, input);
+      return { ok: true };
+    } catch (err) {
+      return { error: (err as Error).message };
+    }
+  }
+
+  // -- guardian: profile + message history ------------------------------------------
+
+  @Get("guardian/profile")
+  async guardianProfile(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "guardian") return { error: "guardian session required" };
+    return web.guardianProfile(tenant.dbName, principal.guardianId);
+  }
+
+  @Get("guardian/messages")
+  async guardianMessages(@Req() req: Request) {
+    const tenant = await tenantFromReq(req);
+    const principal = principalFromReq(req);
+    if (!principal || principal.kind !== "guardian") return { error: "guardian session required" };
+    return { messages: await web.guardianMessages(tenant.dbName, principal.guardianId) };
   }
 }

@@ -10,6 +10,7 @@ export { Card, CardTitle, CardHead, Money, StatusPill, Microlabel } from "./comp
 export type { StatusTone } from "./components/Card";
 export { KpiCard, Meter, Delta } from "./components/Kpi";
 export { SerifHeader, PageCrumb } from "./components/SerifHeader";
+export { Reveal, CountUp, CountUpMoney, Live } from "./components/Motion";
 export { MandelaMark } from "./components/Logo";
 export { StatCard } from "./components/StatCard";
 export { DataTable } from "./components/DataTable";

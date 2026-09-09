@@ -1,12 +1,14 @@
 import { requireBootstrap, whoami, getPulse } from "@/lib/api";
-import { Button, MandelaMark, Microlabel, Meter } from "@mandela/ui";
+import { Button, MandelaMark, Meter } from "@mandela/ui";
+import { HeroPulse } from "./HeroPulse";
 import Link from "next/link";
 
 /**
- * Landing — comp 01 (scripts/design/01-landing.html): editorial ink-on-paper
- * hero with serif display + live pulse card, bento module grid (one ink
- * anchor), ink quote band. Every word, the mark, the modules, the quote and
- * the live numbers come from school_settings / the school database.
+ * Landing — comp 01: editorial ink-on-paper hero with serif display + live
+ * pulse card, bento module grid (one ink anchor), ink quote band. Every
+ * word, the mark, the modules, the quote and the live numbers come from
+ * school_settings / the school database. Reveal staggers entrances;
+ * the pulse card refreshes itself.
  */
 export default async function Landing() {
   const [boot, me, pulse] = await Promise.all([requireBootstrap(), whoami(), getPulse()]);
@@ -49,7 +51,7 @@ export default async function Landing() {
       <main className="mx-auto w-full max-w-6xl px-s5">
         {/* HERO — serif display left, live pulse card right */}
         <section className="grid items-center gap-s8 py-s8 md:grid-cols-[1.35fr_1fr] md:py-s9">
-          <div className="rise">
+          <div>
             <p className="microlabel flex items-center gap-2.5">
               <span aria-hidden className="inline-block h-[1.5px] w-[22px] bg-primary" />
               {s.name} · Admissions open
@@ -88,42 +90,13 @@ export default async function Landing() {
           </div>
 
           {/* PULSE CARD — live aggregates from the school database */}
-          <aside className="rise rise-2 rounded-lg border border-border bg-surface p-s5 shadow-2 md:p-s6">
-            <div className="flex items-center justify-between">
-              <Microlabel>Today at school</Microlabel>
-              <span className="flex items-center gap-1.5 font-mono text-[11px] font-medium text-ok">
-                <span aria-hidden className="h-[7px] w-[7px] rounded-full bg-ok" />
-                LIVE
-              </span>
-            </div>
-            <p className="numeral mt-s3 text-[52px] font-semibold leading-none">
-              {pulse?.rate != null ? `${pulse.rate}` : "—"}
-              <span className="text-xl font-medium text-ink-500">%</span>
-            </p>
-            <div className="mt-2 flex items-baseline justify-between text-[13px] text-muted">
-              <span>learners present</span>
-              <span className="font-semibold tabular-nums text-text">
-                {pulse ? `${pulse.present} of ${pulse.expected}` : ""}
-              </span>
-            </div>
-            <div className="mt-s3">
-              <Meter value={pulse?.rate ?? 0} />
-            </div>
-            <div className="mt-s5 grid grid-cols-2 gap-s4 border-t border-paper-200 pt-s4">
-              <div>
-                <Microlabel>Collected today</Microlabel>
-                <p className="numeral mt-1.5 text-[22px] font-semibold text-ok">
-                  {pulse ? `Ksh ${Math.round(Number(pulse.collected_today_cents) / 100).toLocaleString("en-KE")}` : "—"}
-                </p>
-              </div>
-              <div>
-                <Microlabel>Active learners</Microlabel>
-                <p className="numeral mt-1.5 text-[22px] font-semibold">
-                  {pulse ? pulse.active_learners : "—"}
-                </p>
-              </div>
-            </div>
-          </aside>
+          <HeroPulse
+            rate={pulse?.rate ?? null}
+            present={pulse?.present ?? 0}
+            expected={pulse?.expected ?? 0}
+            collectedTodayCents={pulse?.collected_today_cents ?? "0"}
+            activeLearners={pulse?.active_learners ?? 0}
+          />
         </section>
 
         {/* MODULES — bento with one ink anchor */}
@@ -138,18 +111,18 @@ export default async function Landing() {
             {mods.map((m, i) => {
               const ink = i === 1; // the anchor card
               return (
-                <article
+                <div
                   key={m.title}
                   className={`flex min-h-44 flex-col gap-3 rounded border p-s5 shadow-1 ${widths[i] ?? "md:col-span-2"} ${
                     ink ? "border-brand-deep bg-brand-deep text-brand-deep-contrast" : "border-border bg-surface"
                   }`}
                 >
-                  <span className={`font-mono text-[11px] tracking-[0.1em] ${ink ? "text-ink-400" : "text-ink-400"}`}>
+                  <span className={`font-mono text-[11px] tracking-[0.1em] text-ink-400 ${ink ? "text-ink-400" : ""}`}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <h3 className="text-[19px] font-semibold tracking-[-0.015em]">{m.title}</h3>
                   <p className={`text-sm leading-relaxed ${ink ? "text-ink-300" : "text-muted"}`}>{m.body}</p>
-                </article>
+                </div>
               );
             })}
           </div>
