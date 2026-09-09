@@ -14,9 +14,12 @@ import { cn } from "@mandela/ui";
 export function NavPill({
   items,
   className,
+  responsive = false,
 }: {
   items: { href: string; label: string; icon?: React.ReactNode }[];
   className?: string;
+  /** Icon-only rail below md, full labels from md up (sidebar is always left). */
+  responsive?: boolean;
 }) {
   const pathname = usePathname();
   const listRef = useRef<HTMLUListElement>(null);
@@ -53,14 +56,16 @@ export function NavPill({
           <li key={item.href} className="relative">
             <Link
               href={item.href}
+              title={responsive ? item.label : undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors",
+                responsive && "justify-center px-0 md:justify-start md:px-3",
                 active ? "text-ink-950" : "text-ink-300 hover:bg-ink-900 hover:text-white",
               )}
             >
               {item.icon}
-              {item.label}
+              <span className={responsive ? "hidden md:inline" : undefined}>{item.label}</span>
             </Link>
           </li>
         );

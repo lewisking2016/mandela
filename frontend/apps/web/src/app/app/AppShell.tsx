@@ -1,16 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { MandelaMark } from "@mandela/ui";
 import { NavPill } from "@/components/NavPill";
-import { AppLiveBar } from "./LiveBar";
 
 /**
- * AppShell — comp 02's frame: 248px ink sidebar on desktop (brand, mono
- * section label, white-pill active item, user block), horizontal tab strip
- * + bottom nav on mobile. Tabs and labels come from school_settings.nav —
- * this component never hardcodes a school's navigation.
+ * AppShell — comp 02's frame, now left-anchored at every width: the ink
+ * sidebar is ALWAYS on the left (icon-only rail on narrow screens, full
+ * labels + user block from md up). Tabs and labels come from
+ * school_settings.nav — this component never hardcodes a school's navigation.
  */
 
 const ICONS: Record<string, React.ReactNode> = {
@@ -90,9 +88,8 @@ export function AppShell({
   userMeta: string;
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
-  const shown = tabs.slice(0, 5);
+  const shown = tabs.slice(0, 6);
   const first = shown[0] ?? "Today";
 
   async function signOut() {
@@ -102,23 +99,24 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-dvh md:flex">
-      {/* SIDEBAR — desktop only (comp: ink panel, white-pill active) */}
-      <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col bg-brand-deep px-4 py-6 text-brand-deep-contrast md:flex">
-        <div className="mb-4 flex items-center gap-3 border-b border-deep-line px-2 pb-5">
+    <div className="flex min-h-dvh">
+      {/* SIDEBAR — always left. Icon rail on narrow screens, full labels from md up. */}
+      <aside className="sticky top-0 flex h-dvh w-[68px] shrink-0 flex-col bg-brand-deep px-3 py-6 text-brand-deep-contrast md:w-60 md:px-4">
+        <div className="mb-4 flex items-center justify-center gap-3 border-b border-deep-line px-2 pb-5 md:justify-start">
           {logoPath ? (
             <span className="grid h-9 w-9 place-items-center rounded-[9px] bg-white text-ink-950">
               <MandelaMark path={logoPath} className="h-4.5 w-4.5" title={schoolName} />
             </span>
           ) : null}
-          <span className="min-w-0">
+          <span className="hidden min-w-0 md:block">
             <span className="block truncate text-sm font-semibold tracking-[-0.01em]">{schoolName}</span>
             {motto ? <span className="block truncate text-[11px] text-ink-400">{motto}</span> : null}
           </span>
         </div>
 
-        <p className="px-3 pb-1.5 pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-600">Work</p>
+        <p className="hidden px-3 pb-1.5 pt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-600 md:block">Work</p>
         <NavPill
+          responsive
           className="flex flex-col gap-0.5"
           items={shown.map((tab) => ({
             href: tabToHref(tab, first),
@@ -140,11 +138,11 @@ export function AppShell({
           }))}
         />
 
-        <div className="mt-auto flex items-center gap-3 border-t border-deep-line px-2 pt-4">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-deep-line text-xs font-semibold text-white">
+        <div className="mt-auto flex flex-col items-center gap-2.5 border-t border-deep-line px-2 pt-4 md:flex-row md:justify-start">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-deep-line text-xs font-semibold text-white">
             {initials(userName)}
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="hidden min-w-0 flex-1 md:block">
             <span className="block truncate text-[13px] font-semibold">{userName}</span>
             <span className="block truncate text-[11px] text-ink-400">{userMeta}</span>
           </span>
@@ -152,7 +150,7 @@ export function AppShell({
             onClick={signOut}
             title="Sign out"
             aria-label="Sign out"
-            className="grid h-8 w-8 place-items-center rounded-pill text-ink-400 hover:bg-ink-900 hover:text-white"
+            className="grid h-9 w-9 place-items-center rounded-pill text-ink-400 hover:bg-ink-900 hover:text-white"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
@@ -163,70 +161,7 @@ export function AppShell({
 
       {/* MAIN COLUMN */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* MOBILE TOP BAR */}
-        <header className="sticky top-0 z-10 border-b border-border bg-surface/95 backdrop-blur md:hidden">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              {logoPath ? (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary text-on-primary">
-                  <MandelaMark path={logoPath} className="h-4 w-4" title={schoolName} />
-                </span>
-              ) : null}
-              <span className="min-w-0">
-                <span className="block truncate text-[13px] font-semibold leading-tight">{schoolName}</span>
-                <span className="block truncate text-[11px] text-muted">{userName} · {userMeta}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <AppLiveBar />
-              <button
-                onClick={signOut}
-                className="rounded-pill px-3 py-2.5 text-xs font-semibold text-muted hover:bg-paper-100 hover:text-text"
-              >
-                Sign out
-              </button>
-            </div>
-          </div>
-        </header>
-
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 pt-6 md:px-10 md:pb-16 md:pt-9">{children}</main>
-
-        {/* MOBILE BOTTOM TABS */}
-        <nav
-          aria-label="Primary"
-          className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface/95 backdrop-blur md:hidden"
-        >
-          <div className="mx-auto flex w-full max-w-2xl items-stretch justify-around px-2 py-1.5">
-            {shown.map((tab) => {
-              const href = tabToHref(tab, first);
-              const active = pathname === href;
-              return (
-                <Link
-                  key={tab}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex min-w-tap flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10.5px] font-medium ${
-                    active ? "bg-paper-100 text-text" : "text-muted hover:text-text"
-                  }`}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-[18px] w-[18px]"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    {ICONS[tab] ?? FALLBACK_ICON}
-                  </svg>
-                  <span className="max-w-full truncate">{tab}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-10 md:py-9">{children}</main>
       </div>
     </div>
   );
