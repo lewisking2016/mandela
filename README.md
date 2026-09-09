@@ -7,6 +7,9 @@ Minimal modules, everything included, zero training required.
 Five modules: **People · Money · Classroom · Talk · Insights** — plus optional
 **Library Desk** and **Store Desk**, and the Alumni lifecycle.
 
+📄 **Module-by-module spec, build status, and roadmap: [docs/MODULES.md](docs/MODULES.md)**
+— what each module entails, what works today, what's next.
+
 ---
 
 ## Repository layout
@@ -78,12 +81,18 @@ All three surfaces import the same design tokens:
 - [x] NestJS API skeleton + provisioner implemented (`backend/apps/api`)
 - [x] End-to-end verified: bootstrap → provision school → RLS isolation test → live REST API
 - [x] Next.js web app (`frontend/apps/web`) — landing, login, role shells, dashboards,
-      attendance marking, money (collections + record payment), homework, broadcast,
-      insights. Branding, nav labels, modules and the logo mark all come from the DB.
+      attendance marking, money (collections + record payment + reconcile), homework,
+      broadcast, insights, levies, reports, directory, settings, messages, profile,
+      approve, class. Branding, nav labels, modules and the logo mark all come from the DB.
 - [x] Design system v2: monochrome ink-and-paper palette sampled from `mandela.png`;
       chroma reserved for status; zero gradients (hard rule in `tokens.css`)
+- [x] Module harness: 61-check end-to-end suite (`backend/apps/api/scripts/debug-modules.mjs`)
+      + behavioral RLS suite; RLS enforced in the live API path (SET ROLE mandela_app)
+- [ ] CBC assessment capture + report cards (schema exists, screens pending)
+- [ ] WhatsApp delivery worker · M-Pesa Daraja integration
 - [ ] better-auth integration (login, phone-OTP for parents)
 - [ ] WhatsApp bot v1 · Expo app (`mobile/`) · Tauri shell (`desktop/`)
+- [ ] Transport module + driver dashboard (last parked role)
 
 ## Quick start (dev — no Docker needed)
 
