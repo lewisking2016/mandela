@@ -121,6 +121,11 @@ const DEFAULT_PRIME: Record<string, string> = {
   driver: "Who boards where, and who's left?",
 };
 
+/**
+ * Public branding: no session exists on this path, so as mandela_app the
+ * RLS settings_read policy (migration 007) keeps it readable — and all
+ * personal tables stay locked.
+ */
 export async function getBootstrap(dbName: string): Promise<Bootstrap> {
   const db = getSchoolPool(dbName);
   const s = await db.query<{
@@ -163,8 +168,10 @@ export async function getBootstrap(dbName: string): Promise<Bootstrap> {
 
 export async function resolveStaffLogin(dbName: string, email: string): Promise<{ token: string; staff: { id: string; full_name: string; role: string } } | null> {
   const db = getSchoolPool(dbName);
-  const r = await db.query<{ id: string; full_name: string; role: string; active: boolean }>(
-    `SELECT id, full_name, role::text AS role, active FROM staff WHERE email = $1 AND active = true`,
+  // SECURITY DEFINER helper (migration 007): this lookup runs BEFORE any
+  // session exists, so RLS would hide every staff row from mandela_app.
+  const r = await db.query<{ id: string; full_name: string; role: string }>(
+    `SELECT id, full_name, role FROM app_login_staff($1)`,
     [email],
   );
   if (!r.rowCount) return null;
@@ -177,8 +184,9 @@ export async function resolveStaffLogin(dbName: string, email: string): Promise<
 
 export async function resolveGuardianLogin(dbName: string, phone: string): Promise<{ token: string; guardian: { id: string; full_name: string } } | null> {
   const db = getSchoolPool(dbName);
+  // SECURITY DEFINER helper (migration 007) — same pre-session reasoning.
   const r = await db.query<{ id: string; full_name: string }>(
-    `SELECT id, full_name FROM guardian WHERE phone = $1 AND active = true`,
+    `SELECT id, full_name FROM app_login_guardian($1)`,
     [phone],
   );
   if (!r.rowCount) return null;
@@ -329,7 +337,8 @@ export async function staffHome(dbName: string, principal: Extract<Principal, { 
 
 // ---------------------------------------------------------------------------
 // Public pulse — the landing page's live "Today at school" card.
-// Read WITHOUT RLS session on purpose: aggregates only, no personal rows.
+// Aggregates via the SECURITY DEFINER public_pulse() (migration 007): no
+// personal rows, and no session GUCs exist on the public path on purpose.
 // ---------------------------------------------------------------------------
 
 export interface PublicPulse {
@@ -342,22 +351,16 @@ export interface PublicPulse {
 
 export async function publicPulse(dbName: string): Promise<PublicPulse> {
   const db = getSchoolPool(dbName);
-  const att = await db.query<{ present: string; expected: string }>(
-    `SELECT
-       (SELECT COUNT(*) FROM attendance a WHERE a.day = CURRENT_DATE AND a.mark = 'present')::text AS present,
-       (SELECT COUNT(*) FROM learner WHERE status = 'active')::text AS expected`,
+  const r = await db.query<{ present: string; expected: string; paid_today: string }>(
+    `SELECT present::text, expected::text, paid_today::text FROM public_pulse()`,
   );
-  const money = await db.query<{ total: string }>(
-    `SELECT COALESCE(SUM(amount), 0)::text AS total FROM payments
-     WHERE state = 'confirmed' AND paid_at::date = CURRENT_DATE`,
-  );
-  const present = Number(att.rows[0]!.present);
-  const expected = Number(att.rows[0]!.expected);
+  const present = Number(r.rows[0]!.present);
+  const expected = Number(r.rows[0]!.expected);
   return {
     present,
     expected,
     rate: expected > 0 ? Math.round((present / expected) * 1000) / 10 : null,
-    collected_today_cents: money.rows[0]!.total,
+    collected_today_cents: r.rows[0]!.paid_today,
     active_learners: expected,
   };
 }
@@ -421,9 +424,16 @@ export async function markAttendance(
     let n = 0;
     for (const m of marks) {
       await c.query(
+        // uq_att_learner_day (migration 007) is the arbiter: re-marking a
+        // learner the same day UPDATES the mark instead of inserting a
+        // second row (the old (learner_id, day, id) arbiter double-counted).
         `INSERT INTO attendance (learner_id, day, mark, marked_by)
          VALUES ($1, CURRENT_DATE, $2, $3)
-         ON CONFLICT (learner_id, day, id) DO NOTHING`,
+         ON CONFLICT (learner_id, day) DO UPDATE
+         SET mark = EXCLUDED.mark,
+             marked_by = EXCLUDED.marked_by,
+             synced_at = now(),
+             client_id = NULL`,
         [m.learnerId, m.mark, principal.userId],
       );
       n++;

@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module.js";
+import { StatusExceptionFilter } from "./status-exception.filter.js";
 import { config, useEmbeddedPostgres } from "./config.js";
 import { startEmbeddedPostgres, stopEmbeddedPostgres } from "./embedded-postgres.js";
 import { closeAllPools, getControlPool } from "./db/pool.js";
@@ -17,6 +18,7 @@ async function bootstrap() {
     origin: config.WEB_ORIGIN.split(",").map((s) => s.trim()),
     credentials: true,
   });
+  app.useGlobalFilters(new StatusExceptionFilter());
   app.enableShutdownHooks();
   await app.listen(config.PORT);
   console.log(`[api] Mandela API ready on http://localhost:${config.PORT}`);

@@ -14,6 +14,33 @@ import { getSchoolPool } from "../db/pool.js";
 
 const SESSION_COOKIE = "mandela_session";
 
+/**
+ * Normalize a Kenyan phone to 2547XXXXXXXX / 2541XXXXXXXX. Accepts what the
+ * login page suggests ("0733 000 001") and what guardians actually type.
+ */
+function normalizeKenyanPhone(raw: string): string | null {
+  const digits = raw.replace(/[^\d]/g, "");
+  if (/^254[17]\d{8}$/.test(digits)) return digits;
+  if (/^0[17]\d{8}$/.test(digits)) return `254${digits.slice(1)}`;
+  if (/^[17]\d{8}$/.test(digits)) return `254${digits}`;
+  return null;
+}
+
+/**
+ * Zod parse failures on the auth paths must be a 400 the UI can show, not an
+ * unhandled exception -> 500 (the harness caught exactly that on guardian
+ * phone login). Everything else keeps Nest's default error semantics.
+ */
+function parseInput<T>(schema: z.ZodType<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    const err = new Error(result.error.issues.map((i) => `${i.path.join(".") || "body"}: ${i.message}`).join("; ")) as Error & { status: number };
+    err.status = 400;
+    throw err;
+  }
+  return result.data;
+}
+
 function tenantFromReq(req: Request): Promise<{ dbName: string; slug: string }> {
   return (async () => {
     // The Next.js server forwards the original school host via x-mandela-host.
@@ -49,7 +76,7 @@ export class WebController {
   @Post("login/staff")
   @HttpCode(200)
   async loginStaff(@Req() req: Request, @Body() body: unknown) {
-    const input = z.object({ email: z.string().email() }).parse(body);
+    const input = parseInput(z.object({ email: z.string().email() }), body);
     const tenant = await tenantFromReq(req);
     const result = await web.resolveStaffLogin(tenant.dbName, input.email);
     if (!result) return { ok: false as const, error: "No active staff with that email." };
@@ -68,9 +95,11 @@ export class WebController {
   @Post("login/guardian")
   @HttpCode(200)
   async loginGuardian(@Req() req: Request, @Body() body: unknown) {
-    const input = z.object({ phone: z.string().regex(/^2547\d{8}$/) }).parse(body);
+    const raw = parseInput(z.object({ phone: z.string().min(9).max(20) }), body).phone;
+    const phone = normalizeKenyanPhone(raw);
+    if (!phone) return { ok: false as const, error: "Enter a valid Kenyan phone number, e.g. 0733 000 001." };
     const tenant = await tenantFromReq(req);
-    const result = await web.resolveGuardianLogin(tenant.dbName, input.phone);
+    const result = await web.resolveGuardianLogin(tenant.dbName, phone);
     if (!result) return { ok: false as const, error: "No guardian registered on that phone." };
     const res = req.res!;
     res.cookie(SESSION_COOKIE, result.token, {

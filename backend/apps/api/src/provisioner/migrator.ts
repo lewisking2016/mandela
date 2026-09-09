@@ -26,6 +26,7 @@ export const SCHOOL_MIGRATIONS: MigrationFile[] = [
   { name: "004_audit_partitions.sql", fullPath: SQL_PATHS.schoolAuditPartitions },
   { name: "005_modules.sql", fullPath: SQL_PATHS.schoolModules },
   { name: "006_quote.sql", fullPath: SQL_PATHS.schoolQuote },
+  { name: "007_attendance_rls.sql", fullPath: SQL_PATHS.schoolAttendanceRls },
 ].map(load);
 
 export const CONTROL_MIGRATIONS: MigrationFile[] = [

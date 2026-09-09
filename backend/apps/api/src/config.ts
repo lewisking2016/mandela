@@ -17,6 +17,7 @@ export const SQL_PATHS = {
   schoolAuditPartitions: path.join(BACKEND_ROOT, "db", "school", "004_audit_partitions.sql"),
   schoolModules: path.join(BACKEND_ROOT, "db", "school", "005_modules.sql"),
   schoolQuote: path.join(BACKEND_ROOT, "db", "school", "006_quote.sql"),
+  schoolAttendanceRls: path.join(BACKEND_ROOT, "db", "school", "007_attendance_rls.sql"),
 } as const;
 
 const envSchema = z.object({

@@ -51,7 +51,14 @@ export async function closeAllPools(): Promise<void> {
 }
 
 /**
- * Run a function with the RLS session GUCs set (defense-in-depth layer 2).
+ * Run a function as the RLS-scoped application role with the session GUCs
+ * set (defense-in-depth layers 2+3).
+ *
+ * SET LOCAL ROLE mandela_app is what makes Row Level Security actually apply
+ * to the live product: connecting directly as the cluster owner would bypass
+ * every policy (superusers ignore RLS). The role is NOLOGIN and grants come
+ * from the provisioner; policies come from migrations 002 + 007.
+ *
  * SET LOCAL is transaction-scoped: safe, and reset on rollback.
  */
 export async function withRlsSession<T>(
@@ -66,6 +73,9 @@ export async function withRlsSession<T>(
     if (session.guardianId) {
       await client.query("SELECT set_config('app.guardian_id', $1, true)", [session.guardianId]);
     }
+    // The whole point: drop owner privileges for this transaction so every
+    // statement below runs under the school's RLS policies.
+    await client.query("SET LOCAL ROLE mandela_app");
     const result = await fn(client);
     await client.query("COMMIT");
     return result;
