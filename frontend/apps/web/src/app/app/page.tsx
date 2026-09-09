@@ -1,6 +1,5 @@
 import { requireSession, requireBootstrap, getStaffHome, getGuardianHome, getAnnouncements, getCollections, getPayments, type StaffHomeData, type GuardianHomeData } from "@/lib/api";
 import { Card, CardHead, KpiCard, Meter, Delta, Money, StatusPill, EmptyState, SerifHeader, Reveal, CountUpMoney, CountUp } from "@mandela/ui";
-import { AppShell } from "./AppShell";
 import { AppLiveBar } from "./LiveBar";
 import Link from "next/link";
 
@@ -14,7 +13,6 @@ export default async function AppHome() {
   const me = await requireSession();
   const boot = await requireBootstrap();
   const roleKey = me.principal.kind === "guardian" ? "parent" : me.principal.role ?? "admin";
-  const nav = boot.nav[roleKey] ?? [];
   const prime = boot.prime_questions[roleKey] ?? "";
 
   const isGuardian = me.principal.kind === "guardian";
@@ -33,14 +31,7 @@ export default async function AppHome() {
   const canSeeMoney = !isGuardian && ["bursar", "principal", "admin"].includes(me.principal.role ?? "");
 
   return (
-    <AppShell
-      schoolName={boot.school.name}
-      motto={boot.school.motto}
-      logoPath={boot.school.logo_svg_path}
-      tabs={nav}
-      userName={me.principal.full_name}
-      userMeta={isGuardian ? "Guardian · signed in" : `${(me.principal.role ?? "staff").replace(/^\w/, (c) => c.toUpperCase())} · signed in`}
-    >
+    <>
       <SerifHeader
         crumb={`Today · ${today}`}
         title={<>{greet}, <em>{firstName}.</em></>}
@@ -91,7 +82,7 @@ export default async function AppHome() {
           </section>
         </Reveal>
       </div>
-    </AppShell>
+    </>
   );
 }
 
