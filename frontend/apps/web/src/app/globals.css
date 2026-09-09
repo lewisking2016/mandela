@@ -1,0 +1,142 @@
+@import "@mandela/ui/tokens.css";
+@import "tailwindcss";
+
+/*
+ * Explicit sources: Tailwind v4's automatic detection only scans the app
+ * tree. @mandela/ui components live outside it, so without these lines the
+ * utilities used only inside the package (h-14, px-s6, inline-flex…) are
+ * never generated and buttons collapse below their labels.
+ */
+@source "../../../../packages/ui";
+@source "./";
+
+/*
+ * Tailwind v4 setup: tokens.css is the single source of visual truth.
+ * Same variable names bridged into Tailwind's theme — no duplicated values.
+ */
+@theme inline {
+  --color-ink-950: var(--ink-950);
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-500: var(--ink-500);
+  --color-ink-400: var(--ink-400);
+  --color-ink-300: var(--ink-300);
+  --color-ink-200: var(--ink-200);
+  --color-paper-50: var(--paper-50);
+  --color-paper-100: var(--paper-100);
+  --color-paper-200: var(--paper-200);
+  --color-paper-300: var(--paper-300);
+  --color-paper-400: var(--paper-400);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-ring: var(--ring);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-deep-contrast: var(--brand-deep-contrast);
+  --color-deep-line: var(--deep-line);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+
+  --radius-sm: var(--radius-sm);
+  --radius: var(--radius);
+  --radius-lg: var(--radius-lg);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-glow: var(--shadow-glow);
+
+  --spacing-s1: var(--s1);
+  --spacing-s2: var(--s2);
+  --spacing-s3: var(--s3);
+  --spacing-s3h: var(--s3h);
+  --spacing-s4: var(--s4);
+  --spacing-s5: var(--s5);
+  --spacing-s6: var(--s6);
+  --spacing-s7: var(--s7);
+  --spacing-s8: var(--s8);
+  --spacing-s9: var(--s9);
+  --spacing-tap: var(--tap);
+
+  --text-xs: var(--text-xs);
+  --text-sm: var(--text-sm);
+  --text-md: var(--text-md);
+  --text-lg: var(--text-lg);
+  --text-xl: var(--text-xl);
+  --text-num: var(--text-num);
+  --text-display: var(--text-display);
+  --text-hero: var(--text-hero);
+
+  /* next/font families (layout.tsx) with system fallbacks */
+  --font-sans: var(--inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif: var(--mandela-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--mandela-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --ease-mandela: cubic-bezier(.22,1,.36,1);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Serif display moments — greetings, section statements */
+.display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+}
+.display em {
+  font-style: italic;
+  color: var(--ink-700);
+}
+
+/* Mono micro-labels — the comp's uppercase tracking labels */
+.microlabel {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Big numerals — always tabular so columns of money line up */
+.numeral {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+/* Motion language — staggered float-up (comp: MotionImplied cue 1) */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise .55s var(--ease-mandela) both;
+  }
+  .rise-1 { animation-delay: .04s; }
+  .rise-2 { animation-delay: .09s; }
+  .rise-3 { animation-delay: .14s; }
+  .rise-4 { animation-delay: .19s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise { animation: none; }
+}

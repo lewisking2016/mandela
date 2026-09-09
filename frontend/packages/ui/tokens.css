@@ -1,0 +1,106 @@
+/* ============================================================
+   MANDELA BRAND COLORS — single source of visual truth.
+   v4: the comp-derived system (scripts/design/*.html). Still ink
+   + paper sampled from mandela.png; chroma ONLY for meaning.
+
+   FLAT COLOR RULE: this system uses NO gradients anywhere —
+   no gradient banners, buttons, borders, text or glows. Depth
+   comes from shadow and space alone. Don't add any.
+
+   Type system (from comps): Instrument Serif for display moments
+   (greetings, section statements), Inter for UI, Geist Mono for
+   micro-labels + tabular numerals. Every pairing AA minimum.
+   ============================================================ */
+:root {
+  /* Ink — sampled from the mandela.png mark itself */
+  --ink-950: #020202;    /* the logo's black — 20.3:1 on white */
+  --ink-900: #171717;    /* body text, the deep panels */
+  --ink-800: #272727;    /* hover on ink-950 */
+  --ink-700: #383838;    /* 10.3:1 on white — text safe */
+  --ink-600: #575758;    /* 7.2:1 on white — muted text, AAA */
+  --ink-500: #686868;    /* 5.7:1 on white — small labels */
+  --ink-400: #868686;    /* 3.5:1 — large UI / icons only */
+  --ink-300: #a9a9a9;    /* placeholders, disabled */
+  --ink-200: #bababa;
+
+  /* Paper — the logo's white, cooled one step at a time */
+  --paper-50: #fbfbfc;   /* page background */
+  --paper-100: #f1f1f2;  /* quiet wells, hover fills */
+  --paper-200: #e8e8e8;  /* skeleton fill (sampled) */
+  --paper-300: #d8d8d8;  /* THE border (sampled) */
+  --paper-400: #c7c7c7;  /* strong border, dividers */
+
+  /* Status — the ONLY chroma in the system, never decoration */
+  --ok: #198754;         /* 4.6:1 on white — paid / present / confirmed */
+  --ok-bg: #e6f4ed;
+  --danger: #c92a2a;     /* 5.9:1 on white — overdue / failed */
+  --danger-bg: #fdecec;
+  --warn: #a16207;       /* 4.9:1 on white — due soon / needs attention */
+  --warn-bg: #fefce8;
+
+  /* Semantic */
+  --bg: var(--paper-50);
+  --surface: #ffffff;
+  --border: var(--paper-300);
+  --text: var(--ink-900);
+  --text-muted: var(--ink-600);
+  --primary: var(--ink-950);        /* white label = 20.3:1, AAA */
+  --primary-hover: var(--ink-800);
+  --on-primary: #ffffff;
+  --ring: var(--ink-900);
+  --brand-deep: var(--ink-950);     /* sidebar, headers, the login half */
+  --brand-deep-contrast: #f4f4f5;
+  --deep-line: #262628;             /* hairlines INSIDE deep panels */
+
+  /* Shape + depth (shadow only — flat color, never gradients) */
+  --radius: 18px;        /* cards (comp: 18) */
+  --radius-sm: 12px;     /* inputs, inner rows */
+  --radius-lg: 24px;     /* hero panels */
+  --radius-pill: 999px;  /* buttons, chips, tabs */
+  --shadow-1: 0 1px 2px rgb(2 2 2 / .04), 0 14px 36px -22px rgb(2 2 2 / .12);
+  --shadow-2: 0 2px 6px rgb(2 2 2 / .06), 0 24px 56px -24px rgb(2 2 2 / .18);
+  --shadow-glow: 0 0 0 1px rgb(2 2 2 / .14), 0 8px 28px rgb(2 2 2 / .16);
+
+  /* Fluid type (375px → desktop). Comps: h1 40px, hero 76px, KPI 40px */
+  --text-xs: clamp(.75rem, .72rem + .15vw, .8125rem);
+  --text-sm: clamp(.875rem, .85rem + .18vw, .9375rem);
+  --text-md: clamp(1rem, .96rem + .25vw, 1.125rem);
+  --text-lg: clamp(1.25rem, 1.12rem + .7vw, 1.55rem);
+  --text-xl: clamp(1.75rem, 1.45rem + 1.5vw, 2.5rem);
+  --text-num: clamp(1.875rem, 1.4rem + 2.2vw, 2.5rem);   /* KPI numerals — shrinks before it overflows */
+  --text-display: clamp(2rem, 1.35rem + 3vw, 2.875rem);  /* page h1 serif — 46px max */
+  --text-hero: clamp(2.75rem, 1.6rem + 5.4vw, 4.75rem);  /* landing hero — 76px max */
+
+  /* Spacing scale */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s3h: 14px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 72px; --s9: 96px;
+
+  /* Touch target */
+  --tap: 48px;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0c0c0d;
+  --surface: #131315;
+  --border: #262628;
+  --text: #f2f2f2;
+  --text-muted: #a9a9a9;
+  --primary: #ffffff;               /* black label = 19.3:1 on white, AAA */
+  --primary-hover: #d8d8d8;
+  --on-primary: #0c0c0d;
+  --ring: #d8d8d8;
+  --brand-deep: #000000;
+  --brand-deep-contrast: #e8e8e8;
+  --deep-line: #262628;
+  --ok: #4ad295;
+  --ok-bg: #0e2b1f;
+  --danger: #f28b82;
+  --danger-bg: #2e1414;
+  --warn: #f4b860;
+  --warn-bg: #2b2210;
+  --shadow-1: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .35);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / .5), 0 24px 60px rgb(0 0 0 / .45);
+  --shadow-glow: 0 0 0 1px rgb(255 255 255 / .16), 0 8px 28px rgb(0 0 0 / .5);
+  color-scheme: dark;
+}

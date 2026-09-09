@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandela — Dashboard Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-950:#020202; --ink-900:#171717; --ink-800:#272727; --ink-700:#383838;
+    --ink-600:#575758; --ink-500:#686868; --ink-400:#868686;
+    --paper-50:#fbfbfc; --paper-100:#f1f1f2; --paper-200:#e8e8e8; --paper-300:#d8d8d8;
+    --ok:#198754; --ok-bg:#e6f4ed; --danger:#c92a2a; --warn:#a16207;
+    --serif:"Instrument Serif", Georgia, serif;
+    --sans:"Inter", system-ui, sans-serif;
+    --mono:"Geist Mono", ui-monospace, monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper-50);color:var(--ink-900);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+  /* SIDEBAR */
+  .shell{display:grid;grid-template-columns:248px 1fr;min-height:100dvh}
+  aside{background:var(--ink-950);color:#e8e8e8;padding:26px 18px;display:flex;flex-direction:column;gap:6px}
+  .brand{display:flex;align-items:center;gap:11px;padding:0 8px 22px;border-bottom:1px solid #262628;margin-bottom:16px}
+  .brand .mark{width:36px;height:36px;background:#fff;color:var(--ink-950);border-radius:9px;display:grid;place-items:center}
+  .brand b{font-size:14.5px;font-weight:600;display:block;letter-spacing:-.01em}
+  .brand span{font-size:11px;color:#868686;display:block}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:500;color:#a9a9a9;text-decoration:none}
+  .nav-item:hover{color:#fff;background:#171717}
+  .nav-item.active{background:#fff;color:var(--ink-950);font-weight:600}
+  .nav-item .ic{width:17px;height:17px;opacity:.9}
+  .nav-sec{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#575758;padding:18px 12px 6px}
+  .side-user{margin-top:auto;border-top:1px solid #262628;padding:16px 8px 0;display:flex;gap:11px;align-items:center}
+  .avatar{width:34px;height:34px;border-radius:50%;background:#262628;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:600}
+  .side-user b{font-size:13px;font-weight:600;display:block}
+  .side-user span{font-size:11px;color:#868686;display:block}
+
+  /* MAIN */
+  main{padding:34px 44px 60px;max-width:1180px}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start}
+  .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500)}
+  h1{font-family:var(--serif);font-weight:400;font-size:40px;letter-spacing:-.015em;margin-top:8px;color:var(--ink-950)}
+  h1 em{font-style:italic;color:var(--ink-700)}
+  .top-actions{display:flex;gap:10px;align-items:center}
+  .btn-ink{background:var(--ink-950);color:#fff;border:none;border-radius:999px;padding:11px 20px;font-size:13.5px;font-weight:550;cursor:pointer}
+  .btn-line{background:#fff;border:1px solid var(--paper-300);border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:550;cursor:pointer;color:var(--ink-900)}
+  .date{font-family:var(--mono);font-size:12px;color:var(--ink-500);margin-top:10px}
+
+  /* BENTO */
+  .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:30px}
+  .card{background:#fff;border:1px solid var(--paper-300);border-radius:18px;padding:22px 22px 20px;box-shadow:0 1px 2px rgb(2 2 2/.04),0 14px 36px -22px rgb(2 2 2/.12)}
+  .c4{grid-column:span 4}.c8{grid-column:span 8}.c6{grid-column:span 6}.c12{grid-column:span 12}.c3{grid-column:span 3}
+  .kpi .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500)}
+  .kpi .num{font-size:40px;font-weight:600;letter-spacing:-.03em;margin-top:10px;font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .num small{font-size:17px;color:var(--ink-500);font-weight:500}
+  .kpi .delta{display:inline-flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .delta.ok{color:var(--ok);background:var(--ok-bg)}
+  .delta.danger{color:var(--danger);background:#fdecec}
+  .kpi .note{font-size:12px;color:var(--ink-600);margin-top:12px}
+  .kpi.ink{background:var(--ink-950);border-color:var(--ink-950);color:#fff}
+  .kpi.ink .lbl{color:#868686}
+  .kpi.ink .num small{color:#868686}
+  .kpi.ink .note{color:#a9a9a9}
+
+  .card h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+  .card .sub{font-size:12.5px;color:var(--ink-600);margin-top:3px}
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .link{font-size:12.5px;font-weight:550;color:var(--ink-900);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--paper-300)}
+
+  /* attendance chart (CSS bars — no gradients) */
+  .chart{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:18px}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px}
+  .chart .col i{width:100%;background:var(--ink-950);border-radius:7px 7px 3px 3px;display:block}
+  .chart .col.low i{background:var(--paper-300)}
+  .chart .col span{font-family:var(--mono);font-size:9.5px;color:var(--ink-500)}
+
+  /* rows */
+  .rows{margin-top:6px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--paper-200)}
+  .row:first-child{border-top:none}
+  .row .who{display:flex;gap:11px;align-items:center}
+  .row .who .av{width:32px;height:32px;border-radius:50%;background:var(--paper-100);border:1px solid var(--paper-200);display:grid;place-items:center;font-size:10.5px;font-weight:600;color:var(--ink-700)}
+  .row b{font-size:13.5px;font-weight:600;display:block}
+  .row span.meta{font-size:11.5px;color:var(--ink-600);display:block;margin-top:1px}
+  .amt{font-variant-numeric:tabular-nums;font-weight:600;font-size:14px}
+  .amt.ok{color:var(--ok)}
+  .pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .pill.ok{color:var(--ok);background:var(--ok-bg)}
+  .pill.warn{color:var(--warn);background:#fefce8}
+  .pill.danger{color:var(--danger);background:#fdecec}
+
+  .quick{display:flex;flex-direction:column;gap:10px}
+  .quick a{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--paper-200);border-radius:12px;padding:13px 16px;font-size:13.5px;font-weight:550;color:var(--ink-900);text-decoration:none}
+  .quick a span{color:var(--ink-500);font-weight:400;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 100 100" width="18" height="18" fill="currentColor"><path d="M50 8 12 92h15l6-14h34l6 14h15L50 8Zm-11 55L50 34l11 29H39Z"/></svg></div>
+      <div><b>Mandela School</b><span>Knowledge is light</span></div>
+    </div>
+    <p class="nav-sec">Work</p>
+    <a class="nav-item active"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Today</a>
+    <a class="nav-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Money</a>
+    <a class="nav-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>Mark</a>
+    <a class="nav-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>People</a>
+    <p class="nav-sec">School</p>
+    <a class="nav-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg>Insights</a>
+    <a class="nav-item"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>Broadcast</a>
+    <div class="side-user">
+      <div class="avatar">WM</div>
+      <div><b>Wanjiku Mwangi</b><span>Bursar · signed in</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <div>
+        <p class="crumb">Today · Wednesday, 9 September</p>
+        <h1>Good morning, <em>Wanjiku.</em></h1>
+        <p class="date">What came in, what's expected, what's off?</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn-line">Export</button>
+        <button class="btn-ink">Record payment</button>
+      </div>
+    </div>
+
+    <div class="bento">
+      <!-- Row 1: the money question -->
+      <div class="card kpi c4 ink">
+        <p class="lbl">Collected this term</p>
+        <p class="num">Ksh 415,000</p>
+        <p class="note">of Ksh 1,000,000 billed</p>
+        <div class="chart" style="height:64px;margin-top:16px">
+          <div class="col"><i style="height:22%"></i><span>M</span></div>
+          <div class="col"><i style="height:40%"></i><span>T</span></div>
+          <div class="col low"><i style="height:12%"></i><span>W</span></div>
+          <div class="col"><i style="height:70%"></i><span>T</span></div>
+          <div class="col"><i style="height:55%"></i><span>F</span></div>
+          <div class="col low"><i style="height:18%"></i><span>S</span></div>
+          <div class="col low"><i style="height:10%"></i><span>S</span></div>
+        </div>
+      </div>
+      <div class="card kpi c4">
+        <p class="lbl">Outstanding</p>
+        <p class="num" style="color:var(--danger)">Ksh 585,000</p>
+        <p class="note">across 9 classes · 62 learners with a balance</p>
+        <span class="delta danger">▲ 3.2% vs last week</span>
+      </div>
+      <div class="card kpi c4">
+        <p class="lbl">Attendance today</p>
+        <p class="num">96.4<small>%</small></p>
+        <p class="note">214 present · 8 absent · 2 late</p>
+        <span class="delta ok">✓ marked by 8:04 AM</span>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="card c8">
+        <div class="card-head">
+          <div><h2>Recent payments</h2><p class="sub">Receipts issued this week</p></div>
+          <a class="link" href="#">View ledger →</a>
+        </div>
+        <div class="rows">
+          <div class="row">
+            <div class="who"><div class="av">AM</div><div><b>Amina Mwangi · Gr 4</b><span class="meta">R-8H2K4-9F · M-Pesa · 08:42</span></div></div>
+            <span class="amt ok">Ksh 8,500</span>
+          </div>
+          <div class="row">
+            <div class="who"><div class="av">JO</div><div><b>Joseph Otieno · Gr 6</b><span class="meta">R-8H2K1-3B · Cash · 08:15</span></div></div>
+            <span class="amt ok">Ksh 12,000</span>
+          </div>
+          <div class="row">
+            <div class="who"><div class="av">GW</div><div><b>Grace Wanjiru · Gr 3</b><span class="meta">R-8H2JZ-7C · Bank · Yesterday</span></div></div>
+            <span class="amt ok">Ksh 21,000</span>
+          </div>
+          <div class="row">
+            <div class="who"><div class="av">PK</div><div><b>Peter Kimani · Gr 7</b><span class="meta">R-8H2JS-1A · M-Pesa · Yesterday</span></div></div>
+            <span class="amt ok">Ksh 6,500</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card c4">
+        <div class="card-head"><div><h2>Quick actions</h2></div></div>
+        <div class="quick">
+          <a href="#">Record a payment <span>→</span></a>
+          <a href="#">Mark attendance <span>→</span></a>
+          <a href="#">Send announcement <span>→</span></a>
+          <a href="#">Assign homework <span>→</span></a>
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="card c6">
+        <div class="card-head">
+          <div><h2>Collections by class</h2><p class="sub">Billed vs collected, this term</p></div>
+          <a class="link" href="#">All classes →</a>
+        </div>
+        <div class="rows">
+          <div class="row"><div><b>Grade 4 — Ubuntu</b><span class="meta">Ksh 120,000 billed</span></div><div style="text-align:right"><span class="amt">Ksh 98,000</span><span class="pill warn" style="margin-left:10px">82%</span></div></div>
+          <div class="row"><div><b>Grade 6 — Uhuru</b><span class="meta">Ksh 130,000 billed</span></div><div style="text-align:right"><span class="amt">Ksh 84,500</span><span class="pill warn" style="margin-left:10px">65%</span></div></div>
+          <div class="row"><div><b>Grade 3 — Kibo</b><span class="meta">Ksh 96,000 billed</span></div><div style="text-align:right"><span class="amt">Ksh 91,200</span><span class="pill ok" style="margin-left:10px">95%</span></div></div>
+          <div class="row"><div><b>Grade 7 — Twiga</b><span class="meta">Ksh 140,000 billed</span></div><div style="text-align:right"><span class="amt" style="color:var(--danger)">Ksh 52,300</span><span class="pill danger" style="margin-left:10px">37%</span></div></div>
+        </div>
+      </div>
+
+      <div class="card c6">
+        <div class="card-head">
+          <div><h2>Latest from the school</h2><p class="sub">Announcements to guardians</p></div>
+          <a class="link" href="#">Broadcast →</a>
+        </div>
+        <div class="rows">
+          <div class="row"><div><b>Visiting day moved to Saturday</b><span class="meta">To all guardians · 2 days ago</span></div><span class="pill warn">Alert</span></div>
+          <div class="row"><div><b>Term 3 fee statements are out</b><span class="meta">To all guardians · 5 days ago</span></div><span class="pill ok">Sent</span></div>
+          <div class="row"><div><b>Inter-house athletics on Friday</b><span class="meta">To all guardians · 1 week ago</span></div><span class="pill ok">Sent</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

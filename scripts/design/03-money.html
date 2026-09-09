@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandela — Money Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-950:#020202; --ink-900:#171717; --ink-700:#383838; --ink-600:#575758; --ink-500:#686868;
+    --paper-50:#fbfbfc; --paper-100:#f1f1f2; --paper-200:#e8e8e8; --paper-300:#d8d8d8;
+    --ok:#198754; --ok-bg:#e6f4ed; --danger:#c92a2a; --warn:#a16207;
+    --serif:"Instrument Serif", Georgia, serif;
+    --sans:"Inter", system-ui, sans-serif;
+    --mono:"Geist Mono", ui-monospace, monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper-50);color:var(--ink-900);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .shell{display:grid;grid-template-columns:248px 1fr;min-height:100dvh}
+  aside{background:var(--ink-950);color:#e8e8e8;padding:26px 18px}
+  .brand{display:flex;align-items:center;gap:11px;padding:0 8px 22px;border-bottom:1px solid #262628;margin-bottom:16px}
+  .brand .mark{width:36px;height:36px;background:#fff;color:var(--ink-950);border-radius:9px;display:grid;place-items:center}
+  .brand b{font-size:14.5px;font-weight:600;display:block}
+  .brand span{font-size:11px;color:#868686;display:block}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;font-size:14px;font-weight:500;color:#a9a9a9;margin-bottom:2px}
+  .nav-item.active{background:#fff;color:var(--ink-950);font-weight:600}
+  .nav-sec{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#575758;padding:18px 12px 6px}
+  main{padding:34px 44px 60px;max-width:1180px}
+  .crumb{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500)}
+  h1{font-family:var(--serif);font-weight:400;font-size:40px;letter-spacing:-.015em;margin-top:8px}
+  h1 em{font-style:italic;color:var(--ink-700)}
+  .sub{font-size:13px;color:var(--ink-600);margin-top:8px}
+
+  .bento{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-top:28px}
+  .card{background:#fff;border:1px solid var(--paper-300);border-radius:18px;padding:22px;box-shadow:0 1px 2px rgb(2 2 2/.04),0 14px 36px -22px rgb(2 2 2/.12)}
+  .c4{grid-column:span 4}.c8{grid-column:span 8}.c6{grid-column:span 6}.c12{grid-column:span 12}
+  .kpi .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500)}
+  .kpi .num{font-size:36px;font-weight:600;letter-spacing:-.03em;margin-top:10px;font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .note{font-size:12px;color:var(--ink-600);margin-top:10px}
+  .meter{height:7px;background:var(--paper-100);border-radius:99px;margin-top:14px;overflow:hidden}
+  .meter i{display:block;height:100%;background:var(--ink-950);border-radius:99px}
+  .meter i.ok{background:var(--ok)}
+
+  .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .card h2{font-size:15.5px;font-weight:600}
+  .card .sub2{font-size:12.5px;color:var(--ink-600);margin-top:2px}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-500);text-align:left;padding:8px 10px;border-bottom:1px solid var(--paper-300);font-weight:500}
+  td{padding:12px 10px;border-bottom:1px solid var(--paper-200)}
+  tr:last-child td{border-bottom:none}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  th.num{text-align:right}
+  .pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px}
+  .pill.ok{color:var(--ok);background:var(--ok-bg)}
+  .pill.warn{color:var(--warn);background:#fefce8}
+  .pill.danger{color:var(--danger);background:#fdecec}
+
+  /* record payment form */
+  .form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:7px}
+  .field select,.field input{width:100%;border:1px solid var(--paper-300);border-radius:11px;background:#fff;padding:12px 14px;font-size:14px;font-family:var(--sans);color:var(--ink-900)}
+  .field .hint{font-size:11.5px;color:var(--ink-500);margin-top:6px}
+  .chips{display:flex;gap:8px;margin-top:2px}
+  .chip{border:1px solid var(--paper-300);background:#fff;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:550;cursor:pointer}
+  .chip.on{background:var(--ink-950);color:#fff;border-color:var(--ink-950)}
+  .btn-ink{background:var(--ink-950);color:#fff;border:none;border-radius:999px;padding:13px 26px;font-size:14px;font-weight:600;cursor:pointer;grid-column:2;justify-self:end}
+  .receipt-preview{background:var(--paper-100);border:1px dashed var(--paper-300);border-radius:12px;padding:14px 16px;font-family:var(--mono);font-size:11.5px;color:var(--ink-600);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside>
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 100 100" width="18" height="18" fill="currentColor"><path d="M50 8 12 92h15l6-14h34l6 14h15L50 8Zm-11 55L50 34l11 29H39Z"/></svg></div>
+      <div><b>Mandela School</b><span>Knowledge is light</span></div>
+    </div>
+    <p class="nav-sec">Work</p>
+    <div class="nav-item">Today</div>
+    <div class="nav-item active">Money</div>
+    <div class="nav-item">People</div>
+    <div class="nav-item">Insights</div>
+    <div class="nav-item">Broadcast</div>
+  </aside>
+
+  <main>
+    <p class="crumb">Money · Term 3</p>
+    <h1>The money, <em>by class.</em></h1>
+    <p class="sub">What's billed, what landed, and what to chase — one screen, one truth.</p>
+
+    <div class="bento">
+      <div class="card kpi c4">
+        <p class="lbl">Billed this term</p>
+        <p class="num">Ksh 1,000,000</p>
+        <p class="note">14 fee items · 9 classes</p>
+      </div>
+      <div class="card kpi c4">
+        <p class="lbl">Collected</p>
+        <p class="num" style="color:var(--ok)">Ksh 415,000</p>
+        <p class="note">41.5% of billed</p>
+        <div class="meter"><i class="ok" style="width:41.5%"></i></div>
+      </div>
+      <div class="card kpi c4">
+        <p class="lbl">Outstanding</p>
+        <p class="num" style="color:var(--danger)">Ksh 585,000</p>
+        <p class="note">62 learners with a balance</p>
+        <div class="meter"><i style="width:58.5%"></i></div>
+      </div>
+
+      <div class="card c8">
+        <div class="card-head">
+          <div><h2>Collections by class</h2><p class="sub2">Billed vs collected, this term</p></div>
+        </div>
+        <table>
+          <tr><th>Class</th><th class="num">Billed</th><th class="num">Paid</th><th class="num">Gap</th><th>State</th></tr>
+          <tr><td>Grade 4 — Ubuntu</td><td class="num">120,000</td><td class="num">98,000</td><td class="num">22,000</td><td><span class="pill warn">82%</span></td></tr>
+          <tr><td>Grade 6 — Uhuru</td><td class="num">130,000</td><td class="num">84,500</td><td class="num">45,500</td><td><span class="pill warn">65%</span></td></tr>
+          <tr><td>Grade 3 — Kibo</td><td class="num">96,000</td><td class="num">91,200</td><td class="num">4,800</td><td><span class="pill ok">95%</span></td></tr>
+          <tr><td>Grade 7 — Twiga</td><td class="num">140,000</td><td class="num">52,300</td><td class="num">87,700</td><td><span class="pill danger">37%</span></td></tr>
+        </table>
+      </div>
+
+      <div class="card c4">
+        <div class="card-head"><div><h2>Record a payment</h2><p class="sub2">Receipt issues instantly</p></div></div>
+        <div class="form" style="grid-template-columns:1fr">
+          <div class="field">
+            <label>Learner</label>
+            <select><option>Amina Mwangi · Grade 4 — Ubuntu</option></select>
+          </div>
+          <div class="field">
+            <label>Amount (Ksh)</label>
+            <input value="8,500">
+            <p class="hint">Balance after: Ksh 21,500</p>
+          </div>
+          <div class="field">
+            <label>Method</label>
+            <div class="chips">
+              <span class="chip on">M-Pesa</span><span class="chip">Cash</span><span class="chip">Bank</span>
+            </div>
+          </div>
+          <div class="receipt-preview">R-8H2K4-9F · confirm → audit-logged</div>
+          <button class="btn-ink">Record payment</button>
+        </div>
+      </div>
+
+      <div class="card c12">
+        <div class="card-head">
+          <div><h2>Recent payments</h2><p class="sub2">The ledger — newest first</p></div>
+        </div>
+        <table>
+          <tr><th>Receipt</th><th>Learner</th><th class="num">Amount</th><th>Method</th><th>State</th><th>Paid at</th></tr>
+          <tr><td style="font-family:var(--mono);font-size:12px">R-8H2K4-9F</td><td>Amina Mwangi · Gr 4</td><td class="num">8,500</td><td>M-Pesa</td><td><span class="pill ok">confirmed</span></td><td>Today 08:42</td></tr>
+          <tr><td style="font-family:var(--mono);font-size:12px">R-8H2K1-3B</td><td>Joseph Otieno · Gr 6</td><td class="num">12,000</td><td>Cash</td><td><span class="pill ok">confirmed</span></td><td>Today 08:15</td></tr>
+          <tr><td style="font-family:var(--mono);font-size:12px">R-8H2JZ-7C</td><td>Grace Wanjiru · Gr 3</td><td class="num">21,000</td><td>Bank</td><td><span class="pill warn">pending</span></td><td>Yesterday</td></tr>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

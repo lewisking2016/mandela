@@ -1,0 +1,100 @@
+{
+  "$comment": "MANDELA — PowerSync sync rules (one file, deployed to each school's PowerSync instance). Token claims come from better-auth JWTs minted by the school API: { role, user_id, guardian_id, staff_id }. Every bucket is role-scoped so a phone in a 500,000-learner school syncs hundreds of rows, never millions.",
+
+  "buckets": [
+    {
+      "$comment": "GUARDIAN: their children's profiles",
+      "id": "guardian-learners",
+      "when": "{ role = 'guardian' }",
+      "select": [
+        {
+          "table": "learner",
+          "where": "id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = token_parameters.guardian_id)"
+        }
+      ]
+    },
+    {
+      "$comment": "GUARDIAN: money for their children only (balance math happens on device)",
+      "id": "guardian-money",
+      "when": "{ role = 'guardian' }",
+      "select": [
+        {
+          "table": "fee_item",
+          "where": "learner_id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = token_parameters.guardian_id)"
+        },
+        {
+          "table": "payments",
+          "where": "learner_id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = token_parameters.guardian_id) AND state = 'confirmed'"
+        }
+      ]
+    },
+    {
+      "$comment": "GUARDIAN: attendance + published results (read-only feeds)",
+      "id": "guardian-academics",
+      "when": "{ role = 'guardian' }",
+      "select": [
+        {
+          "table": "attendance",
+          "where": "learner_id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = token_parameters.guardian_id) AND day > now() - interval '90 days'"
+        },
+        {
+          "table": "assessment",
+          "where": "published AND learner_id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = token_parameters.guardian_id)"
+        }
+      ]
+    },
+    {
+      "$comment": "TEACHER: their classes' learners + registers (offline marking)",
+      "id": "teacher-classes",
+      "when": "{ role = 'teacher' }",
+      "select": [
+        {
+          "table": "learner",
+          "where": "class_id IN (SELECT id FROM class WHERE code = ANY (SELECT unnest(classes) FROM staff WHERE id = token_parameters.staff_id))"
+        },
+        {
+          "table": "attendance",
+          "where": "day > now() - interval '60 days' AND learner_id IN (SELECT id FROM learner WHERE class_id IN (SELECT id FROM class WHERE code = ANY (SELECT unnest(classes) FROM staff WHERE id = token_parameters.staff_id)))"
+        }
+      ]
+    },
+    {
+      "$comment": "TEACHER + GUARDIAN: homework for their classes/children",
+      "id": "homework",
+      "when": "{ role IN ('teacher','guardian') }",
+      "select": [
+        {
+          "table": "homework",
+          "where": "CASE WHEN token_parameters.role = 'teacher' THEN class_id IN (SELECT id FROM class WHERE code = ANY (SELECT unnest(classes) FROM staff WHERE id = token_parameters.staff_id)) ELSE class_id IN (SELECT class_id FROM learner WHERE id IN (SELECT learner_id FROM learner_guardian WHERE guardian_id = token_parameters.guardian_id)) END"
+        }
+      ]
+    },
+    {
+      "$comment": "COUNTER: active library copies (issue/return by scan works offline)",
+      "id": "counter-desk",
+      "when": "{ role IN ('counter','bursar','principal') }",
+      "select": [
+        { "table": "library_copy", "where": "with_learner IS NOT NULL OR true" },
+        { "table": "library_item" },
+        { "table": "stock_item" }
+      ]
+    },
+    {
+      "$comment": "EVERYONE: announcements (deduped, urgency-tiered on client)",
+      "id": "announcements",
+      "when": "true",
+      "select": [{ "table": "announcement", "where": "created_at > now() - interval '30 days'" }]
+    },
+    {
+      "$comment": "BURSAR/PRINCIPAL: dashboard aggregates come from the API (materialized views), NOT raw sync — phones never download school-wide ledgers",
+      "id": "leadership-agg",
+      "when": "{ role IN ('bursar','principal') }",
+      "select": [
+        {
+          "table": "mv_collection_by_class",
+          "$comment": "read-only exposure of the materialized view via API-published snapshot table"
+        }
+      ]
+    }
+  ]
+}

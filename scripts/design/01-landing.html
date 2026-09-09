@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mandela — Landing Comp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-950:#020202; --ink-900:#171717; --ink-800:#272727; --ink-700:#383838;
+    --ink-600:#575758; --ink-500:#686868; --ink-400:#868686;
+    --paper-50:#fbfbfc; --paper-100:#f1f1f2; --paper-200:#e8e8e8; --paper-300:#d8d8d8;
+    --ok:#198754; --ok-bg:#e6f4ed;
+    --serif:"Instrument Serif", Georgia, serif;
+    --sans:"Inter", system-ui, sans-serif;
+    --mono:"Geist Mono", ui-monospace, monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper-50);color:var(--ink-900);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 40px}
+
+  /* NAV */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+  .brand{display:flex;align-items:center;gap:12px}
+  .mark{width:40px;height:40px;background:var(--ink-950);border-radius:10px;display:grid;place-items:center;color:#fff}
+  .brand b{font-size:16px;font-weight:600;letter-spacing:-.01em;display:block}
+  .brand span{font-size:12px;color:var(--ink-600);display:block;margin-top:1px}
+  .navlinks{display:flex;gap:28px;align-items:center;font-size:14px;color:var(--ink-600);font-weight:500}
+  .btn-ink{background:var(--ink-950);color:#fff;border:none;border-radius:999px;padding:11px 22px;font-size:14px;font-weight:550;font-family:var(--sans);cursor:pointer}
+  .btn-ghost{background:transparent;border:none;font-size:14px;font-weight:550;color:var(--ink-900);cursor:pointer;padding:11px 8px}
+
+  /* HERO */
+  .hero{display:grid;grid-template-columns:1.35fr 1fr;gap:64px;align-items:center;padding:84px 0 96px}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-600);display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:22px;height:1.5px;background:var(--ink-950);display:inline-block}
+  h1{font-family:var(--serif);font-weight:400;font-size:76px;line-height:1.02;letter-spacing:-.015em;margin-top:22px;color:var(--ink-950)}
+  h1 em{font-style:italic}
+  .sub{margin-top:24px;font-size:18px;line-height:1.6;color:var(--ink-600);max-width:52ch;font-weight:450}
+  .cta{display:flex;gap:14px;margin-top:36px;align-items:center}
+  .cta .btn-ink{padding:15px 30px;font-size:15px}
+  .arrow{font-size:14.5px;font-weight:550;color:var(--ink-900);text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px}
+  .meta{margin-top:44px;display:flex;gap:28px;font-family:var(--mono);font-size:12px;color:var(--ink-500)}
+
+  /* PULSE CARD */
+  .pulse{background:#fff;border:1px solid var(--paper-300);border-radius:20px;padding:26px 26px 24px;box-shadow:0 1px 2px rgb(2 2 2/.04),0 20px 48px -20px rgb(2 2 2/.14)}
+  .pulse-head{display:flex;justify-content:space-between;align-items:center}
+  .pulse-head span{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-600)}
+  .live{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--ok);font-weight:500}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+  .pulse-num{font-size:52px;font-weight:600;letter-spacing:-.03em;margin-top:14px;font-variant-numeric:tabular-nums}
+  .pulse-num small{font-size:20px;color:var(--ink-500);font-weight:500;letter-spacing:0}
+  .pulse-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;font-size:13px;color:var(--ink-600)}
+  .pulse-row b{color:var(--ink-900);font-variant-numeric:tabular-nums}
+  .bar{height:8px;background:var(--paper-100);border-radius:99px;margin-top:12px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--ink-950);border-radius:99px}
+  .split{border-top:1px solid var(--paper-200);margin-top:22px;padding-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .split div p{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-500)}
+  .split div b{display:block;font-size:22px;font-weight:600;margin-top:5px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .split div b.ok{color:var(--ok)}
+
+  /* BENTO MODULES */
+  .mods-head{display:flex;justify-content:space-between;align-items:end;padding-top:8px}
+  .mods-head h2{font-family:var(--serif);font-size:38px;font-weight:400;letter-spacing:-.01em}
+  .mods-head p{font-size:14px;color:var(--ink-600)}
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:28px;padding-bottom:88px}
+  .mod{background:#fff;border:1px solid var(--paper-300);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:14px;min-height:172px;position:relative;overflow:hidden}
+  .mod.w3{grid-column:span 3}.mod.w2{grid-column:span 2}
+  .mod .idx{font-family:var(--mono);font-size:11px;color:var(--ink-400);letter-spacing:.1em}
+  .mod h3{font-size:19px;font-weight:600;letter-spacing:-.015em}
+  .mod p{font-size:14px;line-height:1.55;color:var(--ink-600);max-width:40ch}
+  .mod .foot{margin-top:auto;font-family:var(--mono);font-size:11px;color:var(--ink-500);display:flex;justify-content:space-between}
+  .mod.ink{background:var(--ink-950);border-color:var(--ink-950);color:#fff}
+  .mod.ink .idx{color:#868686}.mod.ink p{color:#c7c7c7}.mod.ink .foot{color:#868686}
+
+  /* MOTTO BAND */
+  .band{background:var(--ink-950);color:#f4f4f5;padding:88px 0;text-align:center}
+  .band blockquote{font-family:var(--serif);font-style:italic;font-size:44px;line-height:1.2;max-width:21ch;margin:0 auto;letter-spacing:-.01em}
+  .band cite{display:block;font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#868686;margin-top:26px}
+
+  footer{padding:34px 0;font-size:13px;color:var(--ink-600);display:flex;justify-content:space-between;border-top:1px solid var(--paper-200)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="brand">
+        <div class="mark">
+          <svg viewBox="0 0 100 100" width="22" height="22" fill="currentColor"><path d="M50 8 12 92h15l6-14h34l6 14h15L50 8Zm-11 55L50 34l11 29H39Z"/></svg>
+        </div>
+        <div><b>Mandela School</b><span>Knowledge is light</span></div>
+      </div>
+      <div class="navlinks">
+        <a style="text-decoration:none;color:inherit">People</a>
+        <a style="text-decoration:none;color:inherit">Money</a>
+        <a style="text-decoration:none;color:inherit">Classroom</a>
+        <button class="btn-ghost">Sign in</button>
+        <button class="btn-ink">Open dashboard</button>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">Admissions open · Term 3, 2026</p>
+        <h1>Run the school.<br><em>See everything.</em></h1>
+        <p class="sub">One place for people, money, the classroom, and every message home — built so a parent, a teacher, or a bursar never has to ask twice.</p>
+        <div class="cta">
+          <button class="btn-ink">Sign in to continue</button>
+          <a class="arrow" style="text-decoration:underline;text-decoration-color:var(--paper-300)">See the five modules ↓</a>
+        </div>
+        <div class="meta">
+          <span>No training needed</span><span>Works offline-first</span><span>Per-school database</span>
+        </div>
+      </div>
+
+      <aside class="pulse">
+        <div class="pulse-head">
+          <span>Today at school</span>
+          <span class="live"><i></i>LIVE</span>
+        </div>
+        <p class="pulse-num">96.4<small>%</small></p>
+        <div class="pulse-row"><span>learners present</span><b>214 of 222</b></div>
+        <div class="bar"><i style="width:96.4%"></i></div>
+        <div class="split">
+          <div><p>Collected today</p><b class="ok">Ksh 12,400</b></div>
+          <div><p>Active learners</p><b>222</b></div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="mods-head">
+      <h2>Five modules. Nothing else.</h2>
+      <p>Everything a school runs on, in one flat system.</p>
+    </div>
+    <section class="bento">
+      <div class="mod w3">
+        <span class="idx">01</span>
+        <h3>People</h3>
+        <p>Learners, guardians, and staff in one directory — admission numbers, classes, and who belongs to whom.</p>
+        <div class="foot"><span>222 learners</span><span>9 classes</span></div>
+      </div>
+      <div class="mod w3 ink">
+        <span class="idx">02</span>
+        <h3>Money</h3>
+        <p>Fee items, collections, and receipts the moment cash lands. Balances you can trust, per class or per child.</p>
+        <div class="foot"><span>Receipts in seconds</span><span>Audit-logged</span></div>
+      </div>
+      <div class="mod w2">
+        <span class="idx">03</span>
+        <h3>Classroom</h3>
+        <p>Attendance in two taps, homework with real due dates.</p>
+        <div class="foot"><span>Two taps</span></div>
+      </div>
+      <div class="mod w2">
+        <span class="idx">04</span>
+        <h3>Talk</h3>
+        <p>Announcements that reach every guardian, with urgency that means something.</p>
+        <div class="foot"><span>All guardians</span></div>
+      </div>
+      <div class="mod w2">
+        <span class="idx">05</span>
+        <h3>Insights</h3>
+        <p>The week at a glance: attendance trend, collection gap, who needs a follow-up.</p>
+        <div class="foot"><span>7-day view</span></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="band">
+    <div class="wrap">
+      <blockquote>“Education is the most powerful weapon which you can use to change the world.”</blockquote>
+      <cite>— Nelson Rolihlahla Mandela</cite>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <footer>
+      <span>Mandela School · Nairobi · +254 700 000 000</span>
+      <span>Powered by Mandela</span>
+    </footer>
+  </div>
+</body>
+</html>
